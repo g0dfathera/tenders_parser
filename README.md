@@ -55,5 +55,6 @@ Be respectful to the host server: a small delay is added between document fetche
 
 If your session expires, update the cookie to continue fetching data.
 
-License
+## License
+
 This script is provided as-is for educational or personal use. Not affiliated with the official government website.
