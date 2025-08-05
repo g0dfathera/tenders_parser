@@ -25,9 +25,6 @@ Update the Cookie
 
 Replace the value of COOKIE in the script with your valid session cookie from tenders.procurement.gov.ge:
 
-python
-Copy
-Edit
 COOKIE = "SPALITE=your_actual_cookie_here"
 Run the Script
 ```
