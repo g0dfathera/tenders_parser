@@ -36,11 +36,11 @@ The script will save all fetched tender document data to tender_documents.txt.
 Customizing Search Filters
 You can adjust the search payload inside the get_search_payload() function to:
 
-Filter by organization
+`Filter by organization`
 
-Filter by date range
+`Filter by date range`
 
-Set procurement codes or other parameters
+`Set procurement codes` or other parameters
 
 Example:
 ```
