@@ -1,6 +1,6 @@
 # Georgian Tender Document Scraper
 
-This Python script scrapes public tender document data from the official Georgian government procurement website. It parses all available pages dynamically and extracts document information related to each tender.
+This Python script scrapes public tender document data from the official Georgian government procurement website (tenders.procurement.gov.ge). It parses all available pages dynamically and extracts document information related to each tender.
 
 ## Features
 
