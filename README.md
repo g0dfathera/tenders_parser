@@ -28,7 +28,7 @@ Replace the value of COOKIE in the script with your valid session cookie from te
 COOKIE = "SPALITE=your_actual_cookie_here"
 Run the Script
 ```
-python script.py
+python main.py
 ```
 
 The script will save all fetched tender document data to tender_documents.txt.
