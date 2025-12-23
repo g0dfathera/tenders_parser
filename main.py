@@ -4,11 +4,14 @@ import time
 
 OUTPUT_FILE = "tender_documents.txt"
 
-# Your session cookie (update if it expires)
-COOKIE = "SPALITE=abcdef123456v4"
 
-SEARCH_URL = "https://tenders.procurement.gov.ge/public/library/controller.php"
-DOCS_URL = "https://tenders.procurement.gov.ge/public/library/controller.php"
+SEARCH_URL = "https://tenders.procurement.gov.ge/engine/controller.php"
+DOCS_URL = SEARCH_URL  
+
+# Replace these with your actual cookie
+COOKIES = {
+    "SPA": "YOUR_ACTUAL_COOKIE_HERE"
+}
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
@@ -16,24 +19,31 @@ HEADERS = {
     "X-Requested-With": "XMLHttpRequest",
     "Referer": "https://tenders.procurement.gov.ge/public/",
     "Origin": "https://tenders.procurement.gov.ge",
-    "Cookie": COOKIE
 }
 
-def get_search_payload(page: int):
-    return {
+session = requests.Session()
+session.headers.update(HEADERS)
+
+
+def get_search_payload(page: int, custom_params=None):
+    """
+    Returns the payload for the search request.
+    """
+    payload = {
         "action": "search_app",
-        "app_t": "0",
+        "lang": "ge",  # always required
         "search": "",
         "app_reg_id": "",
-        "app_shems_id": "1780",
+        "app_shems_id": "0",
         "org_a": "",
         "app_monac_id": "0",
         "org_b": "",
         "app_particip_status_id": "0",
         "app_donor_id": "0",
         "app_status": "0",
-        "app_agr_status": "20",
+        "app_agr_status": "0",
         "app_type": "0",
+        "app_t": "0",
         "app_basecode": "0",
         "app_codes": "",
         "app_date_type": "1",
@@ -41,62 +51,73 @@ def get_search_payload(page: int):
         "app_date_tlll": "",
         "app_amount_from": "",
         "app_amount_to": "",
-        "app_currency": "2",
         "app_pricelist": "0",
+        "app_manufacturer_id": "0",
+        "app_manufacturer": "",
+        "app_model_id": "0",
+        "app_model": "",
+        "app_currency": "2",
         "page": str(page)
     }
+    if custom_params:
+        payload.update(custom_params)
+    return payload
 
 def extract_tender_ids(html: str):
     soup = BeautifulSoup(html, "html.parser")
-    ids = []
-    for row in soup.select("tr[id^=A]"):
-        tid = row.get("id")
-        if tid and tid.startswith("A"):
-            ids.append(tid[1:])
+    ids = [row.get("id")[1:] for row in soup.select("tr[id^=A]") if row.get("id")]
     return ids
 
 def fetch_documents(tender_id: str):
-    params = {
+    payload = {
         "action": "app_docs",
         "app_id": tender_id,
-        "key": "undefined"
+        "key": "undefined",
+        "lang": "ge"
     }
     try:
-        r = requests.get(DOCS_URL, headers=HEADERS, params=params, timeout=10)
+        r = session.post(DOCS_URL, data=payload, timeout=10)
         r.raise_for_status()
         return r.text.strip()
     except Exception as e:
         return f"ERROR fetching tender {tender_id}: {e}"
 
+
 def main():
     page = 1
-    all_results = []
-
-    while True:
-        print(f"[+] Processing page {page}")
-        payload = get_search_payload(page)
-        r = requests.post(SEARCH_URL, data=payload, headers=HEADERS)
-        if r.status_code != 200:
-            print(f"[!] Failed to load page {page}")
-            break
-
-        tender_ids = extract_tender_ids(r.text)
-        if not tender_ids:
-            print(f"[✓] No more tenders found on page {page}. Stopping.")
-            break
-
-        for tid in tender_ids:
-            print(f"  └─> Fetching documents for tender ID {tid}")
-            doc_data = fetch_documents(tid)
-            all_results.append(f"--- Tender ID: {tid} ---\n{doc_data}\n")
-            time.sleep(0.01)  # delay
-
-        page += 1
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(all_results))
-    print(f"\n[✓] Done. Results saved to: {OUTPUT_FILE}")
+        while True:
+            print(f"[+] Processing page {page}")
+            payload = get_search_payload(page)
+            try:
+                r = session.post(SEARCH_URL, data=payload, timeout=10)
+            except Exception as e:
+                print(f"[!] Failed to load page {page}: {e}")
+                break
 
+            if r.status_code != 200:
+                print(f"[!] Failed page {page} | Status: {r.status_code}")
+                print(r.text[:500])
+                break
+
+            tender_ids = extract_tender_ids(r.text)
+            if not tender_ids:
+                print(f"[✓] No more tenders found on page {page}. Stopping.")
+                break
+
+            for tid in tender_ids:
+                print(f"  └─> Fetching documents for tender ID {tid}")
+                doc_data = fetch_documents(tid)
+                f.write(f"--- Tender ID: {tid} ---\n{doc_data}\n")
+                f.flush() 
+                time.sleep(0.05)  
+
+            page += 1
+
+    print(f"\n[✓] Done. Results saved to: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()
+
+# https://tenders.procurement.gov.ge/public/?go=[ID OF THE TENDER]&lang=ge
