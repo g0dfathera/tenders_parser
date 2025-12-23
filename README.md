@@ -18,7 +18,7 @@ This Python script scrapes public tender document data from the official Georgia
 ### Install Dependencies
 
 ```bash
-pip install requests beautifulsoup4
+pip install -r requirements.txt
 ```
 Usage
 Update the Cookie
